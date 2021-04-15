@@ -101,6 +101,8 @@ function rotation(x,y,z, Qbase)
     q2 = Qbase[12]
     q3 = Qbase[13]
 
+    #=
+
     A[1,1] = q0^2 + q1^2 - q2^2 - q3^2
     A[1,2] = 2*(q1*q2 + q0*q3)
     A[1,3] = 2*(q1*q3 - q0*q2)
@@ -110,10 +112,30 @@ function rotation(x,y,z, Qbase)
     A[3,1] = 2*(q1*q3 + q0*q2)
     A[3,2] = 2*(q2*q3 - q0*q1)
     A[3,3] = q0^2 - q1^2 - q2^2 + q3^2
+    =#
+
+    q1 = Qbase[13]
+    q2 = Qbase[10]
+    q3 = Qbase[11]
+    q4 = Qbase[12]
+
+
+    A[1,1] = 1 - 2*q3^2 - 2*q4^2
+    A[1,2] = 2*q2*q3 + 2*q1*q4
+    A[1,3] = 2*q2*q4 - 2*q1*q3
+
+    A[2,1] = 2*q2*q3 - 2*q1*q4
+    A[2,2] = 1 - 2*q4^2 - 2*q2^2
+    A[2,3] = 2*q3*q4 + 2*q1*q2
+
+    A[3,1] = 2*q2*q4 + 2*q1*q3
+    A[3,2] = 2*q3*q4 - 2*q1*q2
+    A[3,3] = 1 - 2*q2^2 - 2*q3^2
+
 
     newx = A[1,1]*x + A[1,2]*y + A[1,3]*z
     newy = A[2,1]*x + A[2,2]*y + A[2,3]*z
-    newz = A[3,1]*x + A[3,2]*y + A[3,3]*z
+    newz = A[3,1]*x + A[3,2]*y + A[3,3]*z    
     return newx, newy, newz
 end
 
@@ -137,13 +159,13 @@ function main()
     init_gc_x = 0.0
     init_gc_y = 0.0
     init_gc_z = 0.0
-    init_omega_x = 1.5e-2
+    init_omega_x = 1.5e-4
     init_omega_y = 0.0
     init_omega_z = 0.0
 
-    dt = 1.0e-4 # [s]
+    dt = 1.0e-6 # [s]
     nt = 1.0e6
-    outstep = 1.0e3
+    outstep = 1.0e4
 
     outdir = "post_result"
     make_dir(outdir)
@@ -155,10 +177,10 @@ function main()
     # q = (ux sin(theta/2), uy sin(theta/2), uz sin(theta/2), cos(theta/2))
     # これにより初期角度と軸を決定できる
     # u = (ux, uy, uz) ：回転軸方向の単位ベクトル
-    init_q_0 = 1.0
+    init_q_0 = 0.0
     init_q_1 = 0.0
     init_q_2 = 0.0
-    init_q_3 = 0.0
+    init_q_3 = 1.0
 
     
     # ------------------------------
@@ -225,8 +247,24 @@ function main()
         
         # Euler explicit
         for i in 1:nprim
-            Qbase[i] = Qbase[i] + dt*flux[i]
+            Qbase[i] = Qbase[i] + dt*flux[i]           
         end
+
+        # 規格化
+        #=
+        q0 = Qbase[10]
+        q1 = Qbase[11]
+        q2 = Qbase[12]
+        q3 = Qbase[13]
+        n = ( q0^2 + q1^2 + q2^2 + q3^2 )^0.5 
+        Qbase[10] = q0*n
+        Qbase[11] = q1*n
+        Qbase[12] = q2*n
+        Qbase[13] = q3*n
+        =#
+
+        #println(Qbase)
+
 
         # move all point
         for i in 1:np
@@ -249,6 +287,8 @@ function main()
             output_result(t, x, np, outdir)
         end
 
+        #=
+
         if t == 100
             Qbase[7] = -1.5e-3
         elseif t == 200
@@ -256,6 +296,7 @@ function main()
         else
             Qbase[7] = 0.0
         end
+        =#
         
         #=
 
